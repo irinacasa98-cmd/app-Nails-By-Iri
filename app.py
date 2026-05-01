@@ -5,7 +5,7 @@ import urllib.parse
 # --- CONFIGURACIÓN ---
 LINK_CITAS_GOOGLE = "https://calendar.google.com/calendar/appointments/schedules/AcZssZ3-lDy6ICRk0OrhYm2IxKSub_XKS-d-BijdvSK77zL1CcXgAfTTsIVtjw46IKE42NYAjy5QOp4h?gv=true"
 
-st.set_page_config(page_title="Turnos - Nails by Iri", layout="centered", page_icon="💅")
+st.set_page_config(page_title="Turnos - Nails by Iri", layout="centered", page_icon="💅🏻")
 
 # --- DISEÑO ESTÉTICO (CSS) ---
 st.markdown(f"""
@@ -56,7 +56,7 @@ if 'paso' not in st.session_state:
 
 # PASO 1: BIENVENIDA Y REGLAS
 if st.session_state.paso == 1:
-    st.markdown("<h1 style='text-align: center;'>💅 Nails by Irina</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align: center;'>💅🏻 Nails by Irina</h1>", unsafe_allow_html=True)
     st.progress(33)
     
     with st.container():
@@ -80,9 +80,17 @@ elif st.session_state.paso == 2:
     components.iframe(LINK_CITAS_GOOGLE, height=550, scrolling=True)
     
     st.markdown("---")
-    if st.button("YA TENGO MI HORARIO ➡️", use_container_width=True):
+    
+    # --- MEJORA: CHECKBOX DE VALIDACIÓN ---
+    st.write("⚠️ **Importante:** Primero elegí tu día y horario arriba.")
+    confirmado = st.checkbox("Ya completé mi reserva en el calendario oficial")
+    
+    if st.button("YA TENGO MI HORARIO ➡️", use_container_width=True, disabled=not confirmado):
         st.session_state.paso = 3
         st.rerun()
+    
+    if not confirmado:
+        st.caption("Debes marcar la casilla para poder continuar al pago.")
     
     if st.button("⬅️ Volver", use_container_width=True):
         st.session_state.paso = 1
