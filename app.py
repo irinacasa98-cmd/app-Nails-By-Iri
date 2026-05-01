@@ -4,7 +4,7 @@ import urllib.parse
 
 # --- CONFIGURACIÓN ---
 LINK_CITAS_GOOGLE = "https://calendar.google.com/calendar/appointments/schedules/AcZssZ3-lDy6ICRk0OrhYm2IxKSub_XKS-d-BijdvSK77zL1CcXgAfTTsIVtjw46IKE42NYAjy5QOp4h?gv=true"
-ALIAS_PAGO = "TU.ALIAS.AQUI" # <-- CAMBIA ESTO POR TU ALIAS REAL
+ALIAS_PAGO = "irina.casa" # <-- CAMBIA ESTO POR TU ALIAS REAL
 
 st.set_page_config(page_title="Turnos - Nails by Iri", layout="centered", page_icon="💅🏻")
 
