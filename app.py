@@ -9,9 +9,13 @@ SCOPES = ['https://www.googleapis.com/auth/calendar']
 calendar_id = "irinacasa98@gmail.com" # Cambia esto por tu mail
 
 def get_calendar_service():
-    creds_dict = st.secrets["google_calendar"]
+    # Creamos una copia del diccionario para poder modificarlo
+    creds_dict = dict(st.secrets["google_calendar"])
+    
     if "private_key" in creds_dict:
+        # Aquí ya no fallará porque estamos editando la COPIA, no el secreto original
         creds_dict["private_key"] = creds_dict["private_key"].replace("\\n", "\n")
+        
     creds = service_account.Credentials.from_service_account_info(creds_dict, scopes=SCOPES)
     return build('calendar', 'v3', credentials=creds)
 
