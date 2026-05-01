@@ -72,12 +72,11 @@ st.markdown(f"""
         margin: 15px 0;
     }}
 
-    /* Botón de copiar */
     .copy-btn {{
         background-color: #d63384;
         color: white;
         border: none;
-        padding: 8px 15px;
+        padding: 10px 20px;
         border-radius: 20px;
         font-size: 14px;
         cursor: pointer;
@@ -114,7 +113,7 @@ elif st.session_state.paso == 2:
     st.progress(66)
     
     # Texto importante arriba
-    st.markdown('<div class="custom-error">⚠️ <b>IMPORTANTE:</b> Primero seleccioná el día y la hora en el calendario y completá tus datos.</div>', unsafe_allow_html=True)
+    st.markdown('<div class="custom-error">⚠️ <b>IMPORTANTE:</b> Primero seleccioná el día y la hora en el calendario de arriba y completá tus datos allí mismo.</div>', unsafe_allow_html=True)
 
     if st.button("YA RESERVÉ, IR AL PAGO ➡️", key="top_next"):
         st.session_state.paso = 3
@@ -124,9 +123,6 @@ elif st.session_state.paso == 2:
     components.iframe(LINK_CITAS_GOOGLE, height=600, scrolling=True)
     st.write("")
 
-    # Texto importante abajo (refuerzo)
-    st.markdown('<div class="custom-error">⚠️ Recordá finalizar el proceso en el calendario antes de continuar.</div>', unsafe_allow_html=True)
-    
     if st.button("CONTINUAR AL PAGO ➡️", key="bottom_next"):
         st.session_state.paso = 3
         st.rerun()
@@ -140,24 +136,31 @@ elif st.session_state.paso == 3:
     st.markdown("<h2>💰 Pago de la Seña</h2>", unsafe_allow_html=True)
     st.progress(100)
     
-    st.write("Realizá la transferencia de la seña para confirmar:")
+    st.write("Copiá el alias y realizá la transferencia:")
     
-    # Caja de Alias con botón de copiar integrado en HTML/JS
+    # Caja de Alias con método de copia universal
     st.markdown(f"""
         <div class="alias-box">
             <p style="margin:0; font-size:14px; color:#d63384 !important;">Alias para transferir:</p>
-            <b id="aliasText" style="font-size:22px; color:#d63384 !important;">{ALIAS_PAGO}</b><br>
-            <button class="copy-btn" onclick="copyAlias()">📋 COPIAR ALIAS</button>
+            <input type="text" value="{ALIAS_PAGO}" id="aliasInput" style="text-align:center; border:none; background:transparent; font-size:22px; font-weight:bold; color:#d63384; width:100%; pointer-events:none;" readonly>
+            <br>
+            <button class="copy-btn" onclick="fallbackCopy()">📋 COPIAR ALIAS</button>
         </div>
 
         <script>
-        function copyAlias() {{
-            var text = document.getElementById("aliasText").innerText;
-            navigator.clipboard.writeText(text).then(function() {{
-                alert("Alias copiado: " + text);
-            }}, function(err) {{
-                console.error('Error al copiar: ', err);
-            }});
+        function fallbackCopy() {{
+            var copyText = document.getElementById("aliasInput");
+            copyText.select();
+            copyText.setSelectionRange(0, 99999); // Para móviles
+            
+            try {{
+                document.execCommand("copy");
+                alert("¡Alias copiado!: " + copyText.value);
+            }} catch (err) {{
+                // Si falla el execCommand, intentamos el navigator moderno por las dudas
+                navigator.clipboard.writeText(copyText.value);
+                alert("Alias copiado");
+            }}
         }}
         </script>
     """, unsafe_allow_html=True)
