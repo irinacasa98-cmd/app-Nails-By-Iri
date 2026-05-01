@@ -1,5 +1,4 @@
 import streamlit as st
-import streamlit.components.v1 as components
 import urllib.parse
 
 # --- CONFIGURACIÓN ---
@@ -14,76 +13,60 @@ col_info, col_btn = st.columns([1, 1])
 
 with col_info:
     st.subheader("1. Reservá tu turno")
-    st.write("Hacé clic en el botón azul para elegir tu horario en el calendario oficial.")
+    st.write("Hacé clic en el botón de abajo para elegir tu día y horario en el calendario oficial.")
     
-    # Inyección del botón con f-string corregido
-    boton_google_html = f"""
-    <div id="calendar-button-container" style="min-height: 100px;">
-        <link href="https://calendar.google.com/calendar/scheduling-button-script.css" rel="stylesheet">
-        <script src="https://calendar.google.com/calendar/scheduling-button-script.js" async></script>
-        <script>
-        function loadCalendarButton() {{
-            if (window.calendar && window.calendar.schedulingButton) {{
-                window.calendar.schedulingButton.load({{
-                    url: '{LINK_CITAS_GOOGLE}',
-                    color: '#039BE5',
-                    label: 'Programar una cita',
-                    target: document.getElementById('calendar-button-container'),
-                }});
-            }} else {{
-                setTimeout(loadCalendarButton, 250);
-            }}
-        }}
-        loadCalendarButton();
-        </script>
-    </div>
-    """
-    components.html(boton_google_html, height=150)
+    # Creamos un botón de Streamlit que funciona como enlace directo
+    # Esto evita los scripts de Google que se están bloqueando
+    st.markdown(f'''
+        <a href="{LINK_CITAS_GOOGLE}" target="_blank" style="text-decoration:none;">
+            <div style="text-align:center; padding:20px; background-color:#039BE5; color:white; border-radius:10px; font-weight:bold; font-size:20px; border: 2px solid #0277bd;">
+                📅 VER DISPONIBILIDAD Y AGENDAR
+            </div>
+        </a>
+    ''', unsafe_allow_html=True)
+    st.caption("Se abrirá una nueva pestaña con el calendario de Google.")
 
 with col_btn:
     st.subheader("2. Política de Seña")
     st.warning("""
     ⚠️ **LEER CON ATENCIÓN:**  
     * Todas las reservas se toman con el **50% de seña**.  
-    * Una vez solicitado el turno, tenés **2 horas** para enviar el comprobante.  
-    * Si no se recibe el pago en ese tiempo, el turno volverá a quedar disponible.
+    * Tenés **2 horas** para enviar el comprobante.  
+    * Pasado ese tiempo, el turno se libera automáticamente.
     """)
 
 st.divider()
 
+# --- SECCIÓN DE WHATSAPP ---
 st.subheader("3. Confirmá tu reserva enviando el comprobante")
 nombre = st.text_input("Nombre Completo:")
 
-# Diccionario corregido (con llaves simples)
 servicios = {
     "Semipermanente ($16.000)": "Semipermanente - $16.000",
     "Kapping ($20.000)": "Kapping - $20.000",
     "Esculpidas ($30.000)": "Esculpidas - $30.000"
 }
 
-servicio_sel = st.selectbox("¿Qué servicio reservaste en el calendario?", options=list(servicios.keys()))
+servicio_sel = st.selectbox("¿Qué servicio reservaste?", options=list(servicios.keys()))
 
-st.markdown("<br>", unsafe_allow_html=True)
-
-if st.button("ENVIAR COMPROBANTE POR WHATSAPP 📱", use_container_width=True, type="primary"):
+if st.button("GENERAR MENSAJE DE WHATSAPP 📱", use_container_width=True, type="primary"):
     if nombre:
         detalle = servicios[servicio_sel]
         msj = (f"¡Hola Irina! Soy *{nombre}*.\n"
                f"Ya agendé mi turno para *{detalle}*.\n"
-               f"Te adjunto el comprobante de la seña del 50%.")
+               f"Te adjunto el comprobante de la seña.")
         
         url_wa = f"https://wa.me/5491135677912?text={urllib.parse.quote(msj)}"
         
         st.markdown(f'''
             <a href="{url_wa}" target="_blank" style="text-decoration:none;">
                 <div style="text-align:center; padding:15px; background-color:#25D366; color:white; border-radius:8px; font-weight:bold; font-size:18px;">
-                    Hacé clic acá para abrir tu WhatsApp y adjuntar la foto
+                    Hacé clic acá para abrir WhatsApp
                 </div>
             </a>
         ''', unsafe_allow_html=True)
-        st.balloons()
     else:
-        st.error("⚠️ Por favor, ingresá tu nombre para poder generar el mensaje.")
+        st.error("⚠️ Por favor, ingresá tu nombre.")
 
 st.markdown("---")
-st.caption("Nails by Irina - Gestión Automática de Citas")
+st.caption("Nails by Irina - Gestión de Citas")
