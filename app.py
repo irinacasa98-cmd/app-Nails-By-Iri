@@ -3,71 +3,60 @@ import streamlit.components.v1 as components
 import urllib.parse
 
 # --- CONFIGURACIÓN ---
-LINK_CITAS_GOOGLE = "https://calendar.google.com/calendar/appointments/schedules/AcZssZ3-lDy6ICRk0OrhYm2IxKSub_XKS-d-BijdvSK77zL1CcXgAfTTsIVtjw46IKE42NYAjy5QOp4h?gv=true"
+# Modificamos el link para intentar forzar una vista más compacta (modo agenda/semana)
+LINK_CITAS_GOOGLE = "https://calendar.google.com/calendar/appointments/schedules/AcZssZ3-lDy6ICRk0OrhYm2IxKSub_XKS-d-BijdvSK77zL1CcXgAfTTsIVtjw46IKE42NYAjy5QOp4h?gv=true&mode=AGENDA"
 
-# Configuración de página optimizada
-st.set_page_config(
-    page_title="Turnos - Nails by Irina", 
-    layout="centered", # Centrado para que en mobile no se pierda nada
-    page_icon="💅"
-)
+st.set_page_config(page_title="Nails by Iri", layout="centered", page_icon="💅")
 
-# Título visual
-st.markdown("<h1 style='text-align: center;'>💅 Nails Art</h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; color: gray;'>Reserva tu turno de forma rápida</p>", unsafe_allow_html=True)
+# CSS para reducir márgenes superiores y estéticos
+st.markdown("""
+    <style>
+    .block-container { padding-top: 1rem; padding-bottom: 1rem; }
+    .stAlert { padding: 0.5rem; }
+    </style>
+    """, unsafe_allow_html=True)
 
-# --- SECCIÓN 1: POLÍTICA DE SEÑA (Compacta para mobile) ---
-with st.expander("📌 IMPORTANTE: Leer política de seña", expanded=True):
-    st.warning("""
-    * **50% de seña** para confirmar.
-    * Tenés **2 horas** para enviar el comprobante.
-    * Caso contrario, el turno se libera automáticamente.
-    """)
+# Contenedor principal tipo "Cuadro"
+with st.container(border=True):
+    st.markdown("<h2 style='text-align: center; margin-bottom: 0;'>💅 Nails by Irina</h2>", unsafe_allow_html=True)
+    st.caption("<p style='text-align: center;'>Reserva y confirmación en un solo paso</p>", unsafe_allow_html=True)
 
-st.divider()
+    # Política de seña muy compacta
+    st.info("⚠️ **Seña del 50% requerida.** Tenés 2hs para enviar el comprobante o el turno se libera.")
 
-# --- SECCIÓN 2: EL CALENDARIO INYECTADO ---
-st.subheader("1. Seleccioná tu turno")
-# Ajustamos el alto para que el calendario de Google se vea bien en celulares
-components.iframe(LINK_CITAS_GOOGLE, height=600, scrolling=True)
+    # Calendario - Reducimos la altura a 500px para que entre más info abajo
+    components.iframe(LINK_CITAS_GOOGLE, height=520, scrolling=True)
 
-st.divider()
+    st.markdown("---")
+    
+    # Formulario apilado
+    nombre = st.text_input("Nombre Completo:", placeholder="Ej: Juana Pérez")
+    
+    servicios = {
+        "Semipermanente ($16.000)": "Semipermanente - $16.000",
+        "Kapping ($20.000)": "Kapping - $20.000",
+        "Esculpidas ($30.000)": "Esculpidas - $30.000"
+    }
+    
+    servicio_sel = st.selectbox("Servicio reservado:", options=list(servicios.keys()))
 
-# --- SECCIÓN 3: DATOS Y WHATSAPP ---
-st.subheader("2. Confirmá tu reserva")
-nombre = st.text_input("Tu Nombre Completo:")
+    # Botón de WhatsApp
+    if st.button("✅ CONFIRMAR Y ENVIAR COMPROBANTE", use_container_width=True, type="primary"):
+        if nombre:
+            detalle = servicios[servicio_sel]
+            msj = (f"¡Hola Irina! Soy *{nombre}*.\n"
+                   f"Reservé turno para *{detalle}*.\n"
+                   f"Adjunto el comprobante de seña.")
+            url_wa = f"https://wa.me/5491135677912?text={urllib.parse.quote(msj)}"
+            
+            st.markdown(f'''
+                <a href="{url_wa}" target="_blank" style="text-decoration:none;">
+                    <div style="text-align:center; padding:12px; background-color:#25D366; color:white; border-radius:10px; font-weight:bold;">
+                        ABRIR WHATSAPP AQUÍ 📱
+                    </div>
+                </a>
+            ''', unsafe_allow_html=True)
+        else:
+            st.error("Por favor, ingresá tu nombre.")
 
-servicios = {
-    "Semipermanente ($16.000)": "Semipermanente - $16.000",
-    "Kapping ($20.000)": "Kapping - $20.000",
-    "Esculpidas ($30.000)": "Esculpidas - $30.000"
-}
-
-servicio_sel = st.selectbox("¿Qué servicio elegiste?", options=list(servicios.keys()))
-
-st.markdown("<br>", unsafe_allow_html=True)
-
-# Botón de WhatsApp grande y llamativo para pulgares
-if st.button("✅ ENVIAR COMPROBANTE POR WHATSAPP", use_container_width=True, type="primary"):
-    if nombre:
-        detalle = servicios[servicio_sel]
-        msj = (f"¡Hola Irina! Soy *{nombre}*.\n"
-               f"Ya agendé mi turno para *{detalle}*.\n"
-               f"Te adjunto el comprobante de la seña.")
-        
-        url_wa = f"https://wa.me/5491135677912?text={urllib.parse.quote(msj)}"
-        
-        # En móviles, es mejor un enlace directo que abra la App
-        st.markdown(f'''
-            <a href="{url_wa}" target="_blank" style="text-decoration:none;">
-                <div style="text-align:center; padding:18px; background-color:#25D366; color:white; border-radius:12px; font-weight:bold; font-size:18px; box-shadow: 2px 2px 10px rgba(0,0,0,0.1);">
-                    CLICK AQUÍ PARA ABRIR WHATSAPP 📱
-                </div>
-            </a>
-        ''', unsafe_allow_html=True)
-        st.balloons()
-    else:
-        st.error("⚠️ Por favor, ingresá tu nombre.")
-
-st.markdown("<br><br>", unsafe_allow_html=True)
-st.caption("Nails by Irina - Gestión de Turnos 2026")
+st.caption("<p style='text-align: center;'>Paso del Rey, Buenos Aires</p>", unsafe_allow_html=True)
