@@ -1,73 +1,104 @@
 import streamlit as st
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, time
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 import urllib.parse
 
-# 1. Configuración de API de Google (usando los Secrets de Streamlit)
-# Si estás probando local, puedes usar el archivo json directamente
-SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
-calendar_id = "irinacasa98@gmail.com" # El calendario que compartiste
+# --- CONFIGURACIÓN ---
+SCOPES = ['https://www.googleapis.com/auth/calendar']
+calendar_id = "irinacasa98@gmail.com" # Cambia esto por tu mail
 
 def get_calendar_service():
-    # Carga las credenciales desde los Secrets de Streamlit
     creds_dict = st.secrets["google_calendar"]
+    if "private_key" in creds_dict:
+        creds_dict["private_key"] = creds_dict["private_key"].replace("\\n", "\n")
     creds = service_account.Credentials.from_service_account_info(creds_dict, scopes=SCOPES)
     return build('calendar', 'v3', credentials=creds)
 
-def check_disponibilidad(fecha_deseada, hora_deseada):
+def obtener_turnos_libres(fecha_sel):
     service = get_calendar_service()
     
-    # Definir el inicio y fin del turno para chequear (ej: 1 hora de duración)
-    inicio_busqueda = datetime.combine(fecha_deseada, hora_deseada).isoformat() + 'Z'
-    fin_busqueda = (datetime.combine(fecha_deseada, hora_deseada) + timedelta(hours=1)).isoformat() + 'Z'
+    # Definir rango del día (Argentina GMT-3)
+    inicio_dia = datetime.combine(fecha_sel, time(0, 0)).isoformat() + "-03:00"
+    fin_dia = datetime.combine(fecha_sel, time(23, 59)).isoformat() + "-03:00"
 
-    # Consultar eventos en ese rango
+    # Traer eventos ocupados
     events_result = service.events().list(
         calendarId=calendar_id,
-        timeMin=inicio_busqueda,
-        timeMax=fin_busqueda,
-        singleEvents=True
+        timeMin=inicio_dia,
+        timeMax=fin_dia,
+        singleEvents=True,
+        orderBy='startTime'
     ).execute()
+    eventos = events_result.get('items', [])
+
+    # Definir horarios de atención (de 10:00 a 19:00 cada 1 hora)
+    horarios_posibles = [time(h, 0) for h in range(10, 19)]
+    ocupados = []
+    for ev in eventos:
+        start = ev['start'].get('dateTime', ev['start'].get('date'))
+        # Extraer solo la hora para comparar
+        dt_start = datetime.fromisoformat(start.replace('Z', '-03:00'))
+        ocupados.append(dt_start.time())
+
+    # Retornar solo los que no están en la lista de ocupados
+    return [h for h in horarios_posibles if h not in ocupados]
+
+def crear_evento_google(nombre, servicio, fecha, hora):
+    service = get_calendar_service()
+    inicio = datetime.combine(fecha, hora)
+    fin = inicio + timedelta(hours=1) # Duración de 1 hora
+
+    evento = {
+        'summary': f'Nails: {nombre} ({servicio})',
+        'description': f'Reserva realizada por la App.\nServicio: {servicio}',
+        'start': {'dateTime': inicio.isoformat() + "-03:00", 'timeZone': 'America/Argentina/Buenos_Aires'},
+        'end': {'dateTime': fin.isoformat() + "-03:00", 'timeZone': 'America/Argentina/Buenos_Aires'},
+    }
     
-    return len(events_result.get('items', [])) == 0
+    service.events().insert(calendarId=calendar_id, body=evento).execute()
 
-# --- INTERFAZ DE STREAMLIT ---
-st.title("💅 Nails Art - Reserva de Turnos")
+# --- INTERFAZ ---
+st.set_page_config(page_title="Agenda Nails", page_icon="💅")
+st.title("💅 Nails Art - Reserva Online")
 
-nombre = st.text_input("Tu Nombre completo:")
-servicio = st.selectbox("Elegí tu servicio:", ["Semipermanente", "Kapping", "Esculpidas"])
+# Paso 1: Datos básicos
+nombre = st.text_input("Nombre Completo:")
+servicio = st.selectbox("Servicio:", ["Semipermanente", "Kapping", "Esculpidas"])
 
-col1, col2 = st.columns(2)
-with col1:
-    fecha = st.date_input("Día:", min_value=datetime.today())
-with col2:
-    # Definimos horarios de atención (ej: de 10 a 20hs)
-    horas_disponibles = [f"{h:02d}:00" for h in range(10, 21)]
-    hora_str = st.selectbox("Hora:", horas_disponibles)
-    hora_dt = datetime.strptime(hora_str, "%H:%M").time()
+# Paso 2: Selección de fecha
+fecha_sel = st.date_input("Elegí un día:", min_value=datetime.today())
 
-if st.button("Verificar Disponibilidad y Reservar"):
-    if not nombre:
-        st.error("Por favor, ingresá tu nombre.")
-    else:
-        # Chequeamos el calendario
-        is_free = check_disponibilidad(fecha, hora_dt)
-        
-        if is_free:
-            st.success(f"¡El horario {hora_str} está disponible!")
-            
-            # Crear link de WhatsApp
-            telefono = "5491135677912"
-            mensaje = f"Hola! Soy {nombre}. Quiero reservar un turno para *{servicio}* el día {fecha.strftime('%d/%m')} a las {hora_str}."
-            url_wa = f"https://wa.me/{telefono}?text={urllib.parse.quote(mensaje)}"
-            
-            st.markdown(f'''
-                <a href="{url_wa}" target="_blank" style="text-decoration: none;">
-                    <div style="background-color: #25D366; color: white; padding: 15px; text-align: center; border-radius: 10px; font-weight: bold;">
-                        CONFIRMAR TURNO POR WHATSAPP 📱
-                    </div>
-                </a>
-            ''', unsafe_allow_html=True)
+# Paso 3: Mostrar horarios disponibles dinámicamente
+libres = obtener_turnos_libres(fecha_sel)
+
+if libres:
+    # Mostramos los horarios como botones o un selector limpio
+    hora_sel = st.selectbox("Horarios disponibles para este día:", libres, format_func=lambda x: x.strftime("%H:%M hs"))
+    
+    if st.button("Confirmar Turno"):
+        if not nombre:
+            st.warning("Por favor, ingresá tu nombre.")
         else:
-            st.error("Lo siento, ese horario ya está ocupado. Por favor elegí otro.")
+            try:
+                # 1. Crear en Google Calendar
+                crear_evento_google(nombre, servicio, fecha_sel, hora_sel)
+                
+                # 2. Preparar WhatsApp
+                telefono = "5491135677912"
+                msj = f"¡Hola! Reservé mi turno por la web:\n👤 *{nombre}*\n💅 *{servicio}*\n📅 *{fecha_sel.strftime('%d/%m')}*\n⏰ *{hora_sel.strftime('%H:%M')} hs*"
+                url_wa = f"https://wa.me/{telefono}?text={urllib.parse.quote(msj)}"
+                
+                st.success("✅ ¡Turno agendado en el calendario!")
+                st.markdown(f'''
+                    <a href="{url_wa}" target="_blank" style="text-decoration: none;">
+                        <div style="background-color: #25D366; color: white; padding: 15px; text-align: center; border-radius: 10px; font-weight: bold; font-size: 20px;">
+                            AVISAR POR WHATSAPP 📱
+                        </div>
+                    </a>
+                ''', unsafe_allow_html=True)
+                st.balloons()
+            except Exception as e:
+                st.error(f"Hubo un error al agendar: {e}")
+else:
+    st.error("❌ No hay más horarios disponibles para este día. Probá con otra fecha.")
