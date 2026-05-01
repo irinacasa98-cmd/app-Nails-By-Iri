@@ -4,7 +4,7 @@ import urllib.parse
 
 # --- CONFIGURACIÓN ---
 LINK_CITAS_GOOGLE = "https://calendar.google.com/calendar/appointments/schedules/AcZssZ3-lDy6ICRk0OrhYm2IxKSub_XKS-d-BijdvSK77zL1CcXgAfTTsIVtjw46IKE42NYAjy5QOp4h?gv=true"
-ALIAS_PAGO = "irina.casa" # He puesto el que vi en tu captura
+ALIAS_PAGO = "irina.casa" 
 
 st.set_page_config(page_title="Turnos - Nails by Iri", layout="centered", page_icon="💅🏻")
 
@@ -63,20 +63,11 @@ st.markdown(f"""
         border: 1px solid #f5c6cb;
         margin: 15px 0;
     }}
-    
-    /* Caja de alias mejorada */
-    .alias-container {{
-        background-color: #fce4ec;
-        padding: 15px;
-        border-radius: 15px;
-        border: 2px dashed #d63384;
-        text-align: center;
-    }}
 
-    /* Estilo para que el bloque de código de Streamlit no desentone tanto */
+    /* Estilo para que el alias resalte sin romper el contenedor */
     code {{
-        background-color: white !important;
         color: #d63384 !important;
+        font-size: 1.2em !important;
     }}
     </style>
     """, unsafe_allow_html=True)
@@ -132,11 +123,10 @@ elif st.session_state.paso == 3:
     
     st.write("Copiá el alias y realizá la transferencia:")
     
-    # Contenedor rosa que envuelve el código de copiado
-    with st.container():
-        st.markdown('<div class="alias-container"><p style="margin:0; font-size:14px; color:#d63384; font-weight:bold;">Alias para transferir:</p>', unsafe_allow_html=True)
-        st.code(ALIAS_PAGO, language=None)
-        st.markdown('<p style="margin-top:5px; font-size:12px; color:#d63384;">👆 Tocá el icono de la derecha para copiar</p></div>', unsafe_allow_html=True)
+    # Caja de Alias limpia y funcional
+    st.info(f"**Alias para transferir:**")
+    st.code(ALIAS_PAGO, language=None)
+    st.caption("👆 Tocá el icono de la derecha para copiar")
     
     st.write("---")
     nombre = st.text_input("¿Tu nombre completo?")
