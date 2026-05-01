@@ -109,3 +109,68 @@ with col2:
                         st.balloons()
                     except Exception as e:
                         st.error(f"Error: {e}")
+
+# ... (mantener lo anterior)
+
+with col2:
+    st.markdown("### 🗓️ Paso 2: Toca un horario libre en la grilla")
+    
+    opciones_calendario = {
+        "initialView": "timeGridWeek",
+        "slotMinTime": "10:00:00",
+        "slotMaxTime": "20:00:00",
+        "allDaySlot": False,
+        "locale": "es",
+        "selectable": True,
+        "contentHeight": "auto",
+        "headerToolbar": {
+            "left": "prev,next today",
+            "center": "title",
+            "right": "timeGridWeek,timeGridDay",
+        },
+    }
+    
+    eventos_google = obtener_eventos_calendario()
+    
+    # Renderizar el calendario
+    cal = calendar(events=eventos_google, options=opciones_calendario, key="calendar_v2")
+
+    # --- NUEVA LÓGICA DE CAPTURA ---
+    # Verificamos si hay una selección activa en el calendario
+    if cal.get("callback") == "select" or cal.get("select"):
+        # Dependiendo de la versión, la info viene en 'select' o en 'callback'
+        seleccion = cal.get("select") or cal.get("callback")
+        
+        inicio_iso = seleccion.get("start")
+        
+        if inicio_iso:
+            # Convertimos la fecha para mostrarla amigablemente
+            fecha_dt = datetime.fromisoformat(inicio_iso.replace('Z', ''))
+            
+            st.success(f"📍 **Horario elegido:** {fecha_dt.strftime('%A %d de %B a las %H:%M hs')}")
+            
+            if st.button("CONFIRMAR TURNO AHORA", type="primary", use_container_width=True):
+                if not nombre:
+                    st.error("⚠️ Por favor, ingresá tu nombre arriba antes de confirmar.")
+                else:
+                    with st.spinner("Agendando..."):
+                        try:
+                            crear_evento_google(nombre, servicio, inicio_iso)
+                            
+                            tel = "5491135677912"
+                            msj = f"¡Hola! Reservé mi turno:\n👤 *{nombre}*\n💅 *{servicio}*\n📅 *{fecha_dt.strftime('%d/%m')}*\n⏰ *{fecha_dt.strftime('%H:%M')} hs*"
+                            url = f"https://wa.me/{tel}?text={urllib.parse.quote(msj)}"
+                            
+                            st.balloons()
+                            st.info("✅ Turno guardado. ¡No olvides avisar por WhatsApp!")
+                            st.markdown(f'''
+                                <a href="{url}" target="_blank" style="text-decoration: none;">
+                                    <div style="background-color: #25D366; color: white; padding: 20px; text-align: center; border-radius: 10px; font-weight: bold; font-size: 18px;">
+                                        ENVIAR COMPROBANTE POR WHATSAPP 📱
+                                    </div>
+                                </a>
+                            ''', unsafe_allow_html=True)
+                        except Exception as e:
+                            st.error(f"Hubo un error: {e}")
+    else:
+        st.info("💡 Tip: Haz clic o arrastra sobre los espacios en blanco del calendario para elegir tu hora.")
