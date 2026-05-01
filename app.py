@@ -4,7 +4,7 @@ import urllib.parse
 
 # --- CONFIGURACIÓN ---
 LINK_CITAS_GOOGLE = "https://calendar.google.com/calendar/appointments/schedules/AcZssZ3-lDy6ICRk0OrhYm2IxKSub_XKS-d-BijdvSK77zL1CcXgAfTTsIVtjw46IKE42NYAjy5QOp4h?gv=true"
-ALIAS_PAGO = "irina.casa" 
+ALIAS_PAGO = "irina.casa" # <-- REEMPLAZÁ CON TU ALIAS REAL
 
 st.set_page_config(page_title="Turnos - Nails by Iri", layout="centered", page_icon="💅🏻")
 
@@ -19,7 +19,6 @@ st.markdown(f"""
         background-attachment: fixed;
     }}
 
-    /* Tarjeta principal con fondo sólido para evitar conflictos de modo oscuro */
     [data-testid="stVerticalBlock"] > div > div > div[data-testid="stVerticalBlock"] {{
         background-color: white !important;
         padding: 30px;
@@ -27,7 +26,6 @@ st.markdown(f"""
         box-shadow: 0 10px 30px rgba(0,0,0,0.15);
     }}
 
-    /* Forzado de color de texto para que NO cambie con el modo del celular */
     .stMarkdown, p, span, label, li {{
         color: #2c2c2c !important; 
     }}
@@ -38,7 +36,6 @@ st.markdown(f"""
         text-align: center;
     }}
 
-    /* Botones Rosa */
     .stButton>button {{
         border-radius: 50px;
         background-color: #d63384;
@@ -49,7 +46,6 @@ st.markdown(f"""
         width: 100%;
     }}
 
-    /* Cuadros de mensaje personalizados (Reemplazan st.warning y st.info) */
     .custom-alert {{
         background-color: #fff3cd;
         color: #856404 !important;
@@ -57,14 +53,6 @@ st.markdown(f"""
         border-radius: 12px;
         border: 1px solid #ffeeba;
         margin-bottom: 20px;
-    }}
-    .custom-info {{
-        background-color: #d1ecf1;
-        color: #0c5460 !important;
-        padding: 15px;
-        border-radius: 12px;
-        border: 1px solid #bee5eb;
-        margin-bottom: 15px;
     }}
     .custom-error {{
         background-color: #f8d7da;
@@ -83,6 +71,19 @@ st.markdown(f"""
         text-align: center;
         margin: 15px 0;
     }}
+
+    /* Botón de copiar */
+    .copy-btn {{
+        background-color: #d63384;
+        color: white;
+        border: none;
+        padding: 8px 15px;
+        border-radius: 20px;
+        font-size: 14px;
+        cursor: pointer;
+        margin-top: 10px;
+        font-weight: bold;
+    }}
     </style>
     """, unsafe_allow_html=True)
 
@@ -93,11 +94,8 @@ if 'paso' not in st.session_state:
 if st.session_state.paso == 1:
     st.markdown("<h1>💅🏻 Nails by Irina</h1>", unsafe_allow_html=True)
     st.progress(33)
-    
     st.markdown("<h3>¡Hola! Bienvenida ✨</h3>", unsafe_allow_html=True)
-    st.write("Confirmá que estás de acuerdo con nuestras políticas:")
     
-    # Cuadro de políticas personalizado
     st.markdown("""
         <div class="custom-alert">
             • <b>Seña del 50%</b> para congelar el turno.<br>
@@ -115,15 +113,19 @@ elif st.session_state.paso == 2:
     st.markdown("<h2>📅 Reservá tu lugar</h2>", unsafe_allow_html=True)
     st.progress(66)
     
+    # Texto importante arriba
+    st.markdown('<div class="custom-error">⚠️ <b>IMPORTANTE:</b> Primero seleccioná el día y la hora en el calendario y completá tus datos.</div>', unsafe_allow_html=True)
+
     if st.button("YA RESERVÉ, IR AL PAGO ➡️", key="top_next"):
         st.session_state.paso = 3
         st.rerun()
-
-    st.markdown('<div class="custom-info">👇 Elegí día y hora aquí abajo y completá tus datos:</div>', unsafe_allow_html=True)
     
+    st.write("")
     components.iframe(LINK_CITAS_GOOGLE, height=600, scrolling=True)
-    
-    st.markdown('<div class="custom-error">⚠️ <b>IMPORTANTE:</b> Debes finalizar la reserva en el calendario de arriba antes de continuar.</div>', unsafe_allow_html=True)
+    st.write("")
+
+    # Texto importante abajo (refuerzo)
+    st.markdown('<div class="custom-error">⚠️ Recordá finalizar el proceso en el calendario antes de continuar.</div>', unsafe_allow_html=True)
     
     if st.button("CONTINUAR AL PAGO ➡️", key="bottom_next"):
         st.session_state.paso = 3
@@ -138,13 +140,26 @@ elif st.session_state.paso == 3:
     st.markdown("<h2>💰 Pago de la Seña</h2>", unsafe_allow_html=True)
     st.progress(100)
     
-    st.write("Para confirmar tu turno, por favor realizá la transferencia de la seña:")
+    st.write("Realizá la transferencia de la seña para confirmar:")
     
+    # Caja de Alias con botón de copiar integrado en HTML/JS
     st.markdown(f"""
         <div class="alias-box">
             <p style="margin:0; font-size:14px; color:#d63384 !important;">Alias para transferir:</p>
-            <b style="font-size:22px; color:#d63384 !important;">{ALIAS_PAGO}</b>
+            <b id="aliasText" style="font-size:22px; color:#d63384 !important;">{ALIAS_PAGO}</b><br>
+            <button class="copy-btn" onclick="copyAlias()">📋 COPIAR ALIAS</button>
         </div>
+
+        <script>
+        function copyAlias() {{
+            var text = document.getElementById("aliasText").innerText;
+            navigator.clipboard.writeText(text).then(function() {{
+                alert("Alias copiado: " + text);
+            }}, function(err) {{
+                console.error('Error al copiar: ', err);
+            }});
+        }}
+        </script>
     """, unsafe_allow_html=True)
     
     st.write("---")
