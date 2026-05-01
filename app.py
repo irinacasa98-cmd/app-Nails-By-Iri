@@ -4,7 +4,7 @@ import urllib.parse
 
 # --- CONFIGURACIÓN ---
 LINK_CITAS_GOOGLE = "https://calendar.google.com/calendar/appointments/schedules/AcZssZ3-lDy6ICRk0OrhYm2IxKSub_XKS-d-BijdvSK77zL1CcXgAfTTsIVtjw46IKE42NYAjy5QOp4h?gv=true"
-ALIAS_PAGO = "irina.casa" # <-- CAMBIA ESTO POR TU ALIAS REAL
+ALIAS_PAGO = "irina.casa" # He puesto el que vi en tu captura
 
 st.set_page_config(page_title="Turnos - Nails by Iri", layout="centered", page_icon="💅🏻")
 
@@ -64,13 +64,19 @@ st.markdown(f"""
         margin: 15px 0;
     }}
     
-    .alias-box {{
+    /* Caja de alias mejorada */
+    .alias-container {{
         background-color: #fce4ec;
-        padding: 20px;
+        padding: 15px;
         border-radius: 15px;
         border: 2px dashed #d63384;
         text-align: center;
-        margin-bottom: 10px;
+    }}
+
+    /* Estilo para que el bloque de código de Streamlit no desentone tanto */
+    code {{
+        background-color: white !important;
+        color: #d63384 !important;
     }}
     </style>
     """, unsafe_allow_html=True)
@@ -124,15 +130,13 @@ elif st.session_state.paso == 3:
     st.markdown("<h2>💰 Pago de la Seña</h2>", unsafe_allow_html=True)
     st.progress(100)
     
-    st.write("Tocá el alias para copiarlo y realizá la transferencia:")
+    st.write("Copiá el alias y realizá la transferencia:")
     
-    # NUEVO MÉTODO: Bloque de código de Streamlit (trae botón de copiar nativo)
-    st.markdown('<div class="alias-box">', unsafe_allow_html=True)
-    st.code(ALIAS_PAGO, language=None)
-    st.markdown('</div>', unsafe_allow_html=True)
-    
-    # Mensaje de ayuda
-    st.caption("💡 Al tocar el ícono de los cuadraditos en el recuadro rosa, el alias se copia solo.")
+    # Contenedor rosa que envuelve el código de copiado
+    with st.container():
+        st.markdown('<div class="alias-container"><p style="margin:0; font-size:14px; color:#d63384; font-weight:bold;">Alias para transferir:</p>', unsafe_allow_html=True)
+        st.code(ALIAS_PAGO, language=None)
+        st.markdown('<p style="margin-top:5px; font-size:12px; color:#d63384;">👆 Tocá el icono de la derecha para copiar</p></div>', unsafe_allow_html=True)
     
     st.write("---")
     nombre = st.text_input("¿Tu nombre completo?")
