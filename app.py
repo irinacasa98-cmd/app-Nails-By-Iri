@@ -7,7 +7,7 @@ import urllib.parse
 # 1. Configuración de API de Google (usando los Secrets de Streamlit)
 # Si estás probando local, puedes usar el archivo json directamente
 SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
-calendar_id = "TU_EMAIL_PERSONAL@gmail.com" # El calendario que compartiste
+calendar_id = "irinacasa98@gmail.com" # El calendario que compartiste
 
 def get_calendar_service():
     # Carga las credenciales desde los Secrets de Streamlit
