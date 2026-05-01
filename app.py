@@ -5,7 +5,7 @@ import urllib.parse
 # --- CONFIGURACIÓN ---
 LINK_CITAS_GOOGLE = "https://calendar.google.com/calendar/appointments/schedules/AcZssZ3-lDy6ICRk0OrhYm2IxKSub_XKS-d-BijdvSK77zL1CcXgAfTTsIVtjw46IKE42NYAjy5QOp4h?gv=true"
 
-st.set_page_config(page_title="Turnos - Nails by Iri", layout="centered", page_icon="💅")
+st.set_page_config(page_title="Turnos - Nails by Iri", layout="centered", page_icon="💅🏻")
 
 # --- DISEÑO ESTÉTICO REFORZADO ---
 st.markdown(f"""
@@ -18,7 +18,7 @@ st.markdown(f"""
         background-attachment: fixed;
     }}
 
-    /* Contenedor blanco sólido para el Calendario (Soluciona el problema de los botones blancos) */
+    /* Contenedor blanco sólido para el Calendario */
     .cal-container {{
         background-color: white !important;
         border-radius: 15px;
@@ -53,7 +53,7 @@ if 'paso' not in st.session_state:
 
 # --- PASO 1: REGLAS ---
 if st.session_state.paso == 1:
-    st.markdown("<h1 style='text-align: center;'>💅 Nails by Irina</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align: center;'>💅🏻 Nails by Irina</h1>", unsafe_allow_html=True)
     st.progress(33)
     
     st.markdown('<div class="step-card">', unsafe_allow_html=True)
@@ -75,7 +75,6 @@ elif st.session_state.paso == 2:
     st.markdown("<h2 style='text-align: center;'>📅 Reservá tu Horario</h2>", unsafe_allow_html=True)
     st.progress(66)
     
-    # Envolvemos el iframe en un div con fondo blanco para que se vea bien
     st.markdown('<div class="cal-container">', unsafe_allow_html=True)
     components.iframe(LINK_CITAS_GOOGLE, height=550, scrolling=True)
     st.markdown('</div>', unsafe_allow_html=True)
