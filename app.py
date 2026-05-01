@@ -81,15 +81,13 @@ elif st.session_state.paso == 2:
     
     st.markdown("---")
     
-    st.write("⚠️ **Importante:** Primero elegí tu día y horario arriba.")
-    confirmado = st.checkbox("Ya completé mi reserva en el calendario oficial")
+    # --- MENSAJE DE IMPORTANCIA (REEMPLAZA AL CHECKBOX) ---
+    st.error("⚠️ **IMPORTANTE:** Debes seleccionar un día y horario en el calendario de arriba y completar el formulario de Google para que tu reserva sea válida.")
+    st.info("Si ya finalizaste tu registro en el calendario, dale a 'Continuar'.")
     
-    if st.button("YA TENGO MI HORARIO ➡️", use_container_width=True, disabled=not confirmado):
+    if st.button("CONTINUAR AL PAGO ➡️", use_container_width=True):
         st.session_state.paso = 3
         st.rerun()
-    
-    if not confirmado:
-        st.caption("Debes marcar la casilla para poder continuar al pago.")
     
     if st.button("⬅️ Volver", use_container_width=True):
         st.session_state.paso = 1
@@ -127,7 +125,6 @@ elif st.session_state.paso == 3:
                         </div>
                     </a>
                 ''', unsafe_allow_html=True)
-                # Se eliminó st.balloons() por ser distractorio
             else:
                 st.error("Por favor, poné tu nombre.")
 
