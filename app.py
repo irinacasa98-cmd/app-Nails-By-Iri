@@ -64,7 +64,6 @@ st.markdown(f"""
         margin: 15px 0;
     }}
 
-    /* CAJA UNIFICADA DE ALIAS */
     .unified-alias-box {{
         background-color: #fce4ec;
         border: 2px dashed #d63384;
@@ -74,39 +73,28 @@ st.markdown(f"""
         margin: 20px 0;
     }}
     
-    .alias-title {{
-        color: #d63384 !important;
-        font-weight: bold;
-        margin-bottom: 10px;
-        font-size: 16px;
-    }}
-
-    .alias-value {{
-        font-family: monospace;
-        font-size: 24px;
-        color: #2c2c2c !important;
-        display: block;
-        margin-bottom: 15px;
-        background: white;
+    .alias-input-style {{
+        width: 100%;
+        border: 2px solid #d63384;
         padding: 10px;
         border-radius: 10px;
+        text-align: center;
+        font-size: 20px;
+        font-family: monospace;
+        background-color: white;
+        margin-bottom: 10px;
+        color: #d63384;
     }}
 
-    .copy-button-custom {{
+    .copy-btn-new {{
         background-color: #d63384;
         color: white;
         border: none;
-        padding: 10px 25px;
+        padding: 12px 20px;
         border-radius: 50px;
-        cursor: pointer;
         font-weight: bold;
-        font-size: 14px;
-        transition: 0.3s;
-    }}
-    
-    .copy-button-custom:active {{
-        transform: scale(0.95);
-        background-color: #b02a6b;
+        cursor: pointer;
+        width: 100%;
     }}
     </style>
     """, unsafe_allow_html=True)
@@ -137,15 +125,13 @@ elif st.session_state.paso == 2:
     st.markdown("<h2>📅 Reservá tu lugar</h2>", unsafe_allow_html=True)
     st.progress(66)
     
-    st.markdown('<div class="custom-error">⚠️ <b>IMPORTANTE:</b> Primero seleccioná el día y la hora abajo y completá tus datos.</div>', unsafe_allow_html=True)
+    st.markdown('<div class="custom-error">⚠️ <b>IMPORTANTE:</b> Seleccioná el día y la hora abajo y completá tus datos allí mismo.</div>', unsafe_allow_html=True)
 
     if st.button("YA RESERVÉ, IR AL PAGO ➡️", key="top_next"):
         st.session_state.paso = 3
         st.rerun()
     
-    st.write("")
     components.iframe(LINK_CITAS_GOOGLE, height=600, scrolling=True)
-    st.write("")
 
     if st.button("CONTINUAR AL PAGO ➡️", key="bottom_next"):
         st.session_state.paso = 3
@@ -160,27 +146,34 @@ elif st.session_state.paso == 3:
     st.markdown("<h2>💰 Pago de la Seña</h2>", unsafe_allow_html=True)
     st.progress(100)
     
-    st.write("Realizá la transferencia de la seña para confirmar:")
+    st.write("Copiá el alias para realizar la transferencia:")
     
-    # CAJA UNIFICADA TOTALMENTE PERSONALIZADA
+    # MÉTODO ULTRALIGERO: Input de texto con selección automática al hacer clic
     st.markdown(f"""
         <div class="unified-alias-box">
-            <div class="alias-title">Alias para transferir:</div>
-            <div class="alias-value" id="copyText">{ALIAS_PAGO}</div>
-            <button class="copy-button-custom" onclick="copyAliasUnificado()">📋 COPIAR ALIAS</button>
+            <p style="color:#d63384; font-weight:bold; margin-bottom:10px;">Alias para transferir:</p>
+            <input type="text" value="{ALIAS_PAGO}" id="myAlias" class="alias-input-style" readonly>
+            <button class="copy-btn-new" onclick="copyFunction()">📋 COPIAR ALIAS</button>
         </div>
 
         <script>
-        function copyAliasUnificado() {{
-            const textToCopy = document.getElementById('copyText').innerText;
-            const tempInput = document.createElement('input');
-            tempInput.value = textToCopy;
-            document.body.appendChild(tempInput);
-            tempInput.select();
-            tempInput.setSelectionRange(0, 99999);
-            document.execCommand('copy');
-            document.body.removeChild(tempInput);
-            alert('¡Alias copiado!: ' + textToCopy);
+        function copyFunction() {{
+            var copyText = document.getElementById("myAlias");
+            
+            // Selección para dispositivos móviles y escritorio
+            copyText.select();
+            copyText.setSelectionRange(0, 99999); 
+            
+            try {{
+                // Intento de copiado tradicional (más compatible)
+                document.execCommand("copy");
+                alert("Alias copiado: " + copyText.value);
+            }} catch (err) {{
+                // Si falla el anterior, usamos la API moderna como respaldo
+                navigator.clipboard.writeText(copyText.value).then(() => {{
+                    alert("Alias copiado");
+                }});
+            }}
         }}
         </script>
     """, unsafe_allow_html=True)
