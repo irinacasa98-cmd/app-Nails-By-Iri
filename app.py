@@ -64,10 +64,49 @@ st.markdown(f"""
         margin: 15px 0;
     }}
 
-    /* Estilo para que el alias resalte sin romper el contenedor */
-    code {{
+    /* CAJA UNIFICADA DE ALIAS */
+    .unified-alias-box {{
+        background-color: #fce4ec;
+        border: 2px dashed #d63384;
+        border-radius: 15px;
+        padding: 20px;
+        text-align: center;
+        margin: 20px 0;
+    }}
+    
+    .alias-title {{
         color: #d63384 !important;
-        font-size: 1.2em !important;
+        font-weight: bold;
+        margin-bottom: 10px;
+        font-size: 16px;
+    }}
+
+    .alias-value {{
+        font-family: monospace;
+        font-size: 24px;
+        color: #2c2c2c !important;
+        display: block;
+        margin-bottom: 15px;
+        background: white;
+        padding: 10px;
+        border-radius: 10px;
+    }}
+
+    .copy-button-custom {{
+        background-color: #d63384;
+        color: white;
+        border: none;
+        padding: 10px 25px;
+        border-radius: 50px;
+        cursor: pointer;
+        font-weight: bold;
+        font-size: 14px;
+        transition: 0.3s;
+    }}
+    
+    .copy-button-custom:active {{
+        transform: scale(0.95);
+        background-color: #b02a6b;
     }}
     </style>
     """, unsafe_allow_html=True)
@@ -121,12 +160,30 @@ elif st.session_state.paso == 3:
     st.markdown("<h2>💰 Pago de la Seña</h2>", unsafe_allow_html=True)
     st.progress(100)
     
-    st.write("Copiá el alias y realizá la transferencia:")
+    st.write("Realizá la transferencia de la seña para confirmar:")
     
-    # Caja de Alias limpia y funcional
-    st.info(f"**Alias para transferir:**")
-    st.code(ALIAS_PAGO, language=None)
-    st.caption("👆 Tocá el icono de la derecha para copiar")
+    # CAJA UNIFICADA TOTALMENTE PERSONALIZADA
+    st.markdown(f"""
+        <div class="unified-alias-box">
+            <div class="alias-title">Alias para transferir:</div>
+            <div class="alias-value" id="copyText">{ALIAS_PAGO}</div>
+            <button class="copy-button-custom" onclick="copyAliasUnificado()">📋 COPIAR ALIAS</button>
+        </div>
+
+        <script>
+        function copyAliasUnificado() {{
+            const textToCopy = document.getElementById('copyText').innerText;
+            const tempInput = document.createElement('input');
+            tempInput.value = textToCopy;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            tempInput.setSelectionRange(0, 99999);
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+            alert('¡Alias copiado!: ' + textToCopy);
+        }}
+        </script>
+    """, unsafe_allow_html=True)
     
     st.write("---")
     nombre = st.text_input("¿Tu nombre completo?")
