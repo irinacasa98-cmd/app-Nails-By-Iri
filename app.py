@@ -64,22 +64,14 @@ st.markdown(f"""
         margin: 15px 0;
     }}
 
-    /* Estilo para la caja del alias */
-    .alias-wrapper {{
-        background-color: #fce4ec;
-        border: 2px dashed #d63384;
-        border-radius: 15px;
-        padding: 15px;
-        text-align: center;
-    }}
-    
-    /* Forzar que el bloque de código se vea prolijo */
+    /* Estilo para que el alias resalte */
     code {{
-        background-color: white !important;
+        background-color: #fce4ec !important;
         color: #d63384 !important;
-        padding: 10px !important;
-        border-radius: 8px !important;
+        padding: 12px !important;
+        border-radius: 10px !important;
         font-size: 1.3em !important;
+        border: 1px solid #d63384;
     }}
     </style>
     """, unsafe_allow_html=True)
@@ -131,14 +123,10 @@ elif st.session_state.paso == 3:
     st.markdown("<h2>💰 Pago de la Seña</h2>", unsafe_allow_html=True)
     st.progress(100)
     
-    st.write("Tocá el icono a la derecha del alias para copiarlo:")
-    
-    # MÉTODO NATIVO DE STREAMLIT (Inmune a bloqueos de navegador)
-    st.markdown('<div class="alias-wrapper">', unsafe_allow_html=True)
-    st.markdown(f'<p style="color:#d63384; font-weight:bold; margin-bottom:5px;">Alias para transferir:</p>', unsafe_allow_html=True)
+    st.markdown("<b>Alias para transferir:</b>", unsafe_allow_html=True)
+    # Método nativo directo, sin cajas extra que generen errores visuales
     st.code(ALIAS_PAGO, language=None)
-    st.markdown('<p style="color:#d63384; font-size:12px; margin-top:5px;">👆 Hacé clic en los cuadraditos blancos para copiar</p>', unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
+    st.caption("👆 Tocá el icono de la derecha para copiar")
     
     st.write("---")
     nombre = st.text_input("¿Tu nombre completo?")
