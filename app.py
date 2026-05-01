@@ -64,37 +64,22 @@ st.markdown(f"""
         margin: 15px 0;
     }}
 
-    .unified-alias-box {{
+    /* Estilo para la caja del alias */
+    .alias-wrapper {{
         background-color: #fce4ec;
         border: 2px dashed #d63384;
         border-radius: 15px;
-        padding: 20px;
+        padding: 15px;
         text-align: center;
-        margin: 20px 0;
     }}
     
-    .alias-input-style {{
-        width: 100%;
-        border: 2px solid #d63384;
-        padding: 10px;
-        border-radius: 10px;
-        text-align: center;
-        font-size: 20px;
-        font-family: monospace;
-        background-color: white;
-        margin-bottom: 10px;
-        color: #d63384;
-    }}
-
-    .copy-btn-new {{
-        background-color: #d63384;
-        color: white;
-        border: none;
-        padding: 12px 20px;
-        border-radius: 50px;
-        font-weight: bold;
-        cursor: pointer;
-        width: 100%;
+    /* Forzar que el bloque de código se vea prolijo */
+    code {{
+        background-color: white !important;
+        color: #d63384 !important;
+        padding: 10px !important;
+        border-radius: 8px !important;
+        font-size: 1.3em !important;
     }}
     </style>
     """, unsafe_allow_html=True)
@@ -146,37 +131,14 @@ elif st.session_state.paso == 3:
     st.markdown("<h2>💰 Pago de la Seña</h2>", unsafe_allow_html=True)
     st.progress(100)
     
-    st.write("Copiá el alias para realizar la transferencia:")
+    st.write("Tocá el icono a la derecha del alias para copiarlo:")
     
-    # MÉTODO ULTRALIGERO: Input de texto con selección automática al hacer clic
-    st.markdown(f"""
-        <div class="unified-alias-box">
-            <p style="color:#d63384; font-weight:bold; margin-bottom:10px;">Alias para transferir:</p>
-            <input type="text" value="{ALIAS_PAGO}" id="myAlias" class="alias-input-style" readonly>
-            <button class="copy-btn-new" onclick="copyFunction()">📋 COPIAR ALIAS</button>
-        </div>
-
-        <script>
-        function copyFunction() {{
-            var copyText = document.getElementById("myAlias");
-            
-            // Selección para dispositivos móviles y escritorio
-            copyText.select();
-            copyText.setSelectionRange(0, 99999); 
-            
-            try {{
-                // Intento de copiado tradicional (más compatible)
-                document.execCommand("copy");
-                alert("Alias copiado: " + copyText.value);
-            }} catch (err) {{
-                // Si falla el anterior, usamos la API moderna como respaldo
-                navigator.clipboard.writeText(copyText.value).then(() => {{
-                    alert("Alias copiado");
-                }});
-            }}
-        }}
-        </script>
-    """, unsafe_allow_html=True)
+    # MÉTODO NATIVO DE STREAMLIT (Inmune a bloqueos de navegador)
+    st.markdown('<div class="alias-wrapper">', unsafe_allow_html=True)
+    st.markdown(f'<p style="color:#d63384; font-weight:bold; margin-bottom:5px;">Alias para transferir:</p>', unsafe_allow_html=True)
+    st.code(ALIAS_PAGO, language=None)
+    st.markdown('<p style="color:#d63384; font-size:12px; margin-top:5px;">👆 Hacé clic en los cuadraditos blancos para copiar</p>', unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
     
     st.write("---")
     nombre = st.text_input("¿Tu nombre completo?")
