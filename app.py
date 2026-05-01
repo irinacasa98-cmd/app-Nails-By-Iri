@@ -81,7 +81,6 @@ elif st.session_state.paso == 2:
     
     st.markdown("---")
     
-    # --- MEJORA: CHECKBOX DE VALIDACIÓN ---
     st.write("⚠️ **Importante:** Primero elegí tu día y horario arriba.")
     confirmado = st.checkbox("Ya completé mi reserva en el calendario oficial")
     
@@ -128,7 +127,7 @@ elif st.session_state.paso == 3:
                         </div>
                     </a>
                 ''', unsafe_allow_html=True)
-                st.balloons()
+                # Se eliminó st.balloons() por ser distractorio
             else:
                 st.error("Por favor, poné tu nombre.")
 
