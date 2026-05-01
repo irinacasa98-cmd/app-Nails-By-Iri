@@ -4,11 +4,13 @@ from google.oauth2 import service_account
 from googleapiclient.discovery import build
 import urllib.parse
 
-# --- CONFIGURACIÓN ---
+# --- CONFIGURACIÓN CRÍTICA ---
+# Asegúrate de que este sea tu Gmail personal donde tienes los turnos
+CALENDAR_ID = "irinacasa98@gmail.com" 
 SCOPES = ['https://www.googleapis.com/auth/calendar']
-calendar_id = "irinacasa98@gmail.com" # <--- CAMBIA ESTO
 
 def get_calendar_service():
+    """Conecta con la API de Google usando los Secrets de Streamlit."""
     creds_dict = dict(st.secrets["google_calendar"])
     if "private_key" in creds_dict:
         creds_dict["private_key"] = creds_dict["private_key"].replace("\\n", "\n")
@@ -16,118 +18,150 @@ def get_calendar_service():
     return build('calendar', 'v3', credentials=creds)
 
 def obtener_disponibilidad_real(fecha_sel):
+    """Lee el calendario y devuelve solo los huecos de 2.5hs libres."""
     service = get_calendar_service()
     
-    # Definimos el inicio y fin del día para consultar
-    tz_offset = "-03:00" # Argentina
-    inicio_dia = datetime.combine(fecha_sel, time(9, 0)).isoformat() + tz_offset
-    fin_dia = datetime.combine(fecha_sel, time(21, 0)).isoformat() + tz_offset
+    # Rango del día en Argentina (GMT-3)
+    tz = "-03:00"
+    inicio_dia = datetime.combine(fecha_sel, time(0, 0)).isoformat() + tz
+    fin_dia = datetime.combine(fecha_sel, time(23, 59)).isoformat() + tz
 
-    # Consultamos los bloques ocupados (FreeBusy)
-    body = {
-        "timeMin": inicio_dia,
-        "timeMax": fin_dia,
-        "items": [{"id": calendar_id}]
-    }
+    # Pedimos la lista de eventos ocupados a Google
+    events_result = service.events().list(
+        calendarId=CALENDAR_ID,
+        timeMin=inicio_dia,
+        timeMax=fin_dia,
+        singleEvents=True,
+        orderBy='startTime'
+    ).execute()
     
-    freebusy_result = service.freebusy().query(body=body).execute()
-    ocupados = freebusy_result['calendars'][calendar_id]['busy']
-
-    # Generamos slots cada 30 min para buscar dónde entran tus 2.5 hs
+    eventos_ocupados = events_result.get('items', [])
+    
     slots_libres = []
     duracion_turno = timedelta(hours=2, minutes=30)
     
-    actual = datetime.combine(fecha_sel, time(10, 0)) # Hora de apertura
-    cierre = datetime.combine(fecha_sel, time(20, 0)) # Hora de cierre
+    # Tu horario de atención (ajustable)
+    hora_inicio_lab = time(10, 0)
+    hora_fin_lab = time(20, 0)
+    
+    actual = datetime.combine(fecha_sel, hora_inicio_lab)
+    cierre = datetime.combine(fecha_sel, hora_fin_lab)
 
     while actual + duracion_turno <= cierre:
-        # Verificamos si este bloque de 2.5hs choca con algún evento ocupado
-        bloque_inicio = actual.replace(tzinfo=None)
-        bloque_fin = (actual + duracion_turno).replace(tzinfo=None)
+        bloque_inicio = actual
+        bloque_fin = actual + duracion_turno
         
         es_valido = True
-        for ocupado in ocupados:
-            bus_start = datetime.fromisoformat(ocupado['start'].replace('Z', '')[:19])
-            bus_end = datetime.fromisoformat(ocupado['end'].replace('Z', '')[:19])
+        for ev in eventos_ocupados:
+            # Ignorar eventos de "Todo el día" que no tienen dateTime
+            ev_start_raw = ev['start'].get('dateTime')
+            ev_end_raw = ev['end'].get('dateTime')
             
-            # Si el turno se solapa con un evento ocupado
-            if not (bloque_fin <= bus_start or bloque_inicio >= bus_end):
-                es_valido = False
-                break
+            if ev_start_raw and ev_end_raw:
+                # Normalizamos horarios para comparar
+                ev_start = datetime.fromisoformat(ev_start_raw.replace('Z', tz)[:19])
+                ev_end = datetime.fromisoformat(ev_end_raw.replace('Z', tz)[:19])
+                
+                # Si el bloque de 2.5hs se solapa con un evento ocupado, no es válido
+                if not (bloque_fin <= ev_start or bloque_inicio >= ev_end):
+                    es_valido = False
+                    break
         
         if es_valido:
             slots_libres.append(actual.time())
         
-        # Saltamos de a 30 min para ofrecer opciones (ej: 10:00, 10:30, 11:00)
+        # Saltos de 30 minutos para ofrecer opciones de inicio
         actual += timedelta(minutes=30)
         
     return slots_libres
 
-def agendar_en_google(nombre, servicio, fecha, hora):
+def agendar_en_google(nombre, servicio, precio, fecha, hora):
+    """Inyecta el evento directamente en tu Google Calendar."""
     service = get_calendar_service()
     inicio = datetime.combine(fecha, hora)
-    fin = inicio + timedelta(hours=2, minutes=30) # Bloque de 2.5hs
+    fin = inicio + timedelta(hours=2, minutes=30)
     
     evento = {
         'summary': f'Nails: {nombre} ({servicio})',
-        'description': f'Servicio: {servicio}\nDuración bloqueada: 2.5hs',
+        'description': f'Servicio: {servicio}\nPrecio: {precio}\nReserva desde App Streamlit.',
         'start': {'dateTime': inicio.isoformat() + "-03:00", 'timeZone': 'America/Argentina/Buenos_Aires'},
         'end': {'dateTime': fin.isoformat() + "-03:00", 'timeZone': 'America/Argentina/Buenos_Aires'},
     }
-    service.events().insert(calendarId=calendar_id, body=evento).execute()
+    service.events().insert(calendarId=CALENDAR_ID, body=evento).execute()
 
-# --- INTERFAZ ---
-st.set_page_config(page_title="Reserva Nails", page_icon="💅")
+# --- INTERFAZ DE USUARIO ---
+st.set_page_config(page_title="Turnos Nails by Iri", page_icon="💅")
 
-st.title("💅 Reserva tu Turno")
+st.title("💅 Nails Art - Reserva de Turnos")
+st.write("Seleccioná tu servicio y buscá un horario disponible.")
 
-# 1. Datos y Precios
-nombre = st.text_input("Tu Nombre Completo:")
+# 1. Selección de Servicio y Precios
+nombre = st.text_input("Nombre Completo:")
 
-# Diccionario de precios para el mensaje de WhatsApp
-servicios_precios = {
-    "Semipermanente ($16.000)": "Semipermanente - $16.000",
-    "Kapping ($20.000)": "Kapping - $20.000",
-    "Esculpidas ($30.000)": "Esculpidas - $30.000"
+servicios = {
+    "Semipermanente": 16000,
+    "Kapping": 20000,
+    "Esculpidas": 30000
 }
 
-servicio_elegido = st.selectbox("Elegí el servicio:", list(servicios_precios.keys()))
+# Formateamos las opciones para que el cliente vea el precio
+opciones_servicio = [f"{s} (${p:,})" for s, p in servicios.items()]
+seleccion = st.selectbox("¿Qué servicio te vas a hacer?", opciones_servicio)
+
+# Extraer nombre del servicio y precio para el mensaje
+servicio_limpio = seleccion.split(" (")[0]
+precio_limpio = seleccion.split(" (")[1].replace(")", "")
 
 # 2. Fecha
-st.subheader("📅 Seleccioná el día")
-fecha_sel = st.date_input("Día:", min_value=datetime.today())
+fecha_sel = st.date_input("Elegí el día:", min_value=datetime.today())
 
-# 3. Horarios con lógica de 2.5hs
-st.subheader("⏰ Horarios Disponibles (Bloques de 2.5hs)")
+# 3. Horarios
+st.subheader("⏰ Horarios Disponibles")
+st.caption("Los turnos tienen una duración de 2.5 horas.")
+
 with st.spinner("Consultando agenda real..."):
-    libres = obtener_disponibilidad_real(fecha_sel)
+    try:
+        libres = obtener_disponibilidad_real(fecha_sel)
+        
+        if libres:
+            cols = st.columns(4)
+            for i, h in enumerate(libres):
+                with cols[i % 4]:
+                    if st.button(h.strftime("%H:%M"), key=f"btn_{h}", use_container_width=True):
+                        if not nombre:
+                            st.error("⚠️ Por favor, ingresá tu nombre.")
+                        else:
+                            with st.spinner("Agendando..."):
+                                agendar_en_google(nombre, servicio_limpio, precio_limpio, fecha_sel, h)
+                                
+                                # Preparar WhatsApp
+                                tel = "5491135677912"
+                                msj = (f"¡Hola! Reservé mi turno:\n"
+                                       f"👤 *{nombre}*\n"
+                                       f"💅 *{servicio_limpio}*\n"
+                                       f"💰 *{precio_limpio}*\n"
+                                       f"📅 *{fecha_sel.strftime('%d/%m')}*\n"
+                                       f"⏰ *{h.strftime('%H:%M')} hs*\n\n"
+                                       f"Adjunto el comprobante de pago:")
+                                
+                                url_wa = f"https://wa.me/{tel}?text={urllib.parse.quote(msj)}"
+                                
+                                st.success("✅ ¡Turno agendado!")
+                                st.balloons()
+                                
+                                st.markdown(f'''
+                                    <a href="{url_wa}" target="_blank" style="text-decoration:none;">
+                                        <div style="background-color:#25D366; color:white; padding:20px; border-radius:10px; font-weight:bold; text-align:center; font-size:18px;">
+                                            ENVIAR COMPROBANTE POR WHATSAPP 📱
+                                        </div>
+                                    </a>
+                                ''', unsafe_allow_html=True)
+        else:
+            st.warning("No hay bloques de 2.5hs disponibles para este día.")
+            
+    except Exception as e:
+        st.error(f"Error de conexión: {e}")
+        st.info("Asegúrate de que el calendario esté compartido con la Service Account.")
 
-if libres:
-    cols = st.columns(4)
-    for i, h in enumerate(libres):
-        with cols[i % 4]:
-            if st.button(h.strftime("%H:%M"), key=f"h_{i}", use_container_width=True):
-                if not nombre:
-                    st.error("⚠️ Escribí tu nombre primero.")
-                else:
-                    try:
-                        agendar_en_google(nombre, servicio_elegido, fecha_sel, h)
-                        
-                        tel = "5491135677912"
-                        resumen = servicios_precios[servicio_elegido]
-                        msj = f"¡Hola! Reservé mi turno:\n👤 *{nombre}*\n💅 *{resumen}*\n📅 *{fecha_sel.strftime('%d/%m')}*\n⏰ *{h.strftime('%H:%M')} hs*\n\nAdjunto comprobante:"
-                        url_wa = f"https://wa.me/{tel}?text={urllib.parse.quote(msj)}"
-                        
-                        st.success("✅ Turno inyectado en el calendario.")
-                        st.markdown(f'''
-                            <a href="{url_wa}" target="_blank" style="text-decoration:none;">
-                                <div style="background-color:#25D366; color:white; padding:15px; border-radius:8px; font-weight:bold; text-align:center; font-size:18px;">
-                                    ENVIAR COMPROBANTE POR WHATSAPP 📱
-                                </div>
-                            </a>
-                        ''', unsafe_allow_html=True)
-                        st.balloons()
-                    except Exception as e:
-                        st.error(f"Error: {e}")
-else:
-    st.warning("No hay espacio suficiente para un turno de 2.5hs este día.")
+st.divider()
+st.caption("Nails by Iri - Sistema de Reservas Automático")
