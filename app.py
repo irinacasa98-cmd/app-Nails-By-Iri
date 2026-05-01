@@ -4,7 +4,7 @@ import urllib.parse
 
 # --- CONFIGURACIÓN ---
 LINK_CITAS_GOOGLE = "https://calendar.google.com/calendar/appointments/schedules/AcZssZ3-lDy6ICRk0OrhYm2IxKSub_XKS-d-BijdvSK77zL1CcXgAfTTsIVtjw46IKE42NYAjy5QOp4h?gv=true"
-ALIAS_PAGO = "irina.casa" # <-- REEMPLAZÁ CON TU ALIAS REAL
+ALIAS_PAGO = "TU.ALIAS.AQUI" # <-- CAMBIA ESTO POR TU ALIAS REAL
 
 st.set_page_config(page_title="Turnos - Nails by Iri", layout="centered", page_icon="💅🏻")
 
@@ -54,6 +54,7 @@ st.markdown(f"""
         border: 1px solid #ffeeba;
         margin-bottom: 20px;
     }}
+
     .custom-error {{
         background-color: #f8d7da;
         color: #721c24 !important;
@@ -69,19 +70,7 @@ st.markdown(f"""
         border-radius: 15px;
         border: 2px dashed #d63384;
         text-align: center;
-        margin: 15px 0;
-    }}
-
-    .copy-btn {{
-        background-color: #d63384;
-        color: white;
-        border: none;
-        padding: 10px 20px;
-        border-radius: 20px;
-        font-size: 14px;
-        cursor: pointer;
-        margin-top: 10px;
-        font-weight: bold;
+        margin-bottom: 10px;
     }}
     </style>
     """, unsafe_allow_html=True)
@@ -112,8 +101,7 @@ elif st.session_state.paso == 2:
     st.markdown("<h2>📅 Reservá tu lugar</h2>", unsafe_allow_html=True)
     st.progress(66)
     
-    # Texto importante arriba
-    st.markdown('<div class="custom-error">⚠️ <b>IMPORTANTE:</b> Primero seleccioná el día y la hora en el calendario de arriba y completá tus datos allí mismo.</div>', unsafe_allow_html=True)
+    st.markdown('<div class="custom-error">⚠️ <b>IMPORTANTE:</b> Primero seleccioná el día y la hora abajo y completá tus datos.</div>', unsafe_allow_html=True)
 
     if st.button("YA RESERVÉ, IR AL PAGO ➡️", key="top_next"):
         st.session_state.paso = 3
@@ -136,34 +124,15 @@ elif st.session_state.paso == 3:
     st.markdown("<h2>💰 Pago de la Seña</h2>", unsafe_allow_html=True)
     st.progress(100)
     
-    st.write("Copiá el alias y realizá la transferencia:")
+    st.write("Tocá el alias para copiarlo y realizá la transferencia:")
     
-    # Caja de Alias con método de copia universal
-    st.markdown(f"""
-        <div class="alias-box">
-            <p style="margin:0; font-size:14px; color:#d63384 !important;">Alias para transferir:</p>
-            <input type="text" value="{ALIAS_PAGO}" id="aliasInput" style="text-align:center; border:none; background:transparent; font-size:22px; font-weight:bold; color:#d63384; width:100%; pointer-events:none;" readonly>
-            <br>
-            <button class="copy-btn" onclick="fallbackCopy()">📋 COPIAR ALIAS</button>
-        </div>
-
-        <script>
-        function fallbackCopy() {{
-            var copyText = document.getElementById("aliasInput");
-            copyText.select();
-            copyText.setSelectionRange(0, 99999); // Para móviles
-            
-            try {{
-                document.execCommand("copy");
-                alert("¡Alias copiado!: " + copyText.value);
-            }} catch (err) {{
-                // Si falla el execCommand, intentamos el navigator moderno por las dudas
-                navigator.clipboard.writeText(copyText.value);
-                alert("Alias copiado");
-            }}
-        }}
-        </script>
-    """, unsafe_allow_html=True)
+    # NUEVO MÉTODO: Bloque de código de Streamlit (trae botón de copiar nativo)
+    st.markdown('<div class="alias-box">', unsafe_allow_html=True)
+    st.code(ALIAS_PAGO, language=None)
+    st.markdown('</div>', unsafe_allow_html=True)
+    
+    # Mensaje de ayuda
+    st.caption("💡 Al tocar el ícono de los cuadraditos en el recuadro rosa, el alias se copia solo.")
     
     st.write("---")
     nombre = st.text_input("¿Tu nombre completo?")
